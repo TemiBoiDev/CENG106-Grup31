@@ -36,10 +36,9 @@ public abstract class AbstractProduct {
         return stockQuantity > 0;
     }
 
-    // DÜZELTME 1: Stok bittiğinde özel hatamızı fırlatıyoruz
     public void decreaseStock() {
         if (stockQuantity <= 0) {
-            throw new OutOfStockException("Stokta ürün kalmadı!");
+            throw new OutOfStockException("None left in stock!");
         }
         stockQuantity--;
     }
@@ -60,7 +59,6 @@ public abstract class AbstractProduct {
         System.out.println(this.toString());
     }
 
-    // DÜZELTME 2: Exception fırlatan hatalı kod düzeltildi
     public int getStock() {
         return this.stockQuantity; 
     }
