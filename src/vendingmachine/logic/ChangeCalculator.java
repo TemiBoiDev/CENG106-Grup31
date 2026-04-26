@@ -3,55 +3,14 @@ package vendingmachine.logic;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-/**
- * =========================================================================
- *  CHANGE CALCULATOR  —  Multi-Method Payment Utility
- * =========================================================================
- *
- *  Handles three payment methods through a single unified API:
- *
- *    PaymentMethod.CASH         — physical money; greedy algorithm computes
- *                                  the optimal bill/coin breakdown for change.
- *    PaymentMethod.CREDIT_CARD  — post-pay credit; no physical change needed.
- *    PaymentMethod.BANK_CARD    — debit/direct debit; no physical change needed.
- *
- *  TYPICAL USAGE (from UserLogic or Main)
- *  ----------------------------------------
- *    // Cash payment
- *    PaymentResult result = ChangeCalculator.processPayment(
- *            2.00,              // item price
- *            5.00,              // money inserted
- *            PaymentMethod.CASH
- *    );
- *    if (result.isSuccess()) {
- *        result.printReceipt();
- *        // then call machine.dispense(slot) and machine.addRevenue(price)
- *    }
- *
- *    // Card payment
- *    PaymentResult result = ChangeCalculator.processPayment(
- *            2.00, 2.00, PaymentMethod.CREDIT_CARD
- *    );
- *
- *  For cash, the "amountTendered" is what the user physically inserted.
- *  For card payments, pass the exact item price as both arguments —
- *  or any amount >= price; the card always charges exactly the item price.
- * =========================================================================
- */
 public class ChangeCalculator {
 
-    // ── Payment Method Enum ───────────────────────────────────────────
-    /**
-     * Supported payment methods.
-     * Add new methods here (e.g. MOBILE_PAY) without touching the rest.
-     */
     public enum PaymentMethod {
         CASH,
         CREDIT_CARD,
         BANK_CARD
     }
 
-    // ── US denominations (largest first) ─────────────────────────────
     private static final double[] DENOMINATIONS = {
         100.00, 50.00, 20.00, 10.00, 5.00, 1.00,
         0.25, 0.10, 0.05, 0.01
@@ -61,20 +20,6 @@ public class ChangeCalculator {
         "25c", "10c", "5c", "1c"
     };
 
-    // =========================================================================
-    //  PUBLIC API — single entry point for all payment types
-    // =========================================================================
-
-    /**
-     * Processes a payment and returns a PaymentResult.
-     *
-     * @param itemPrice       Price of the product (must be > 0)
-     * @param amountTendered  Money handed over by the customer.
-     *                        For CASH: actual bills/coins inserted.
-     *                        For CARD: pass the exact price (card charges exact).
-     * @param method          CASH | CREDIT_CARD | BANK_CARD
-     * @return                PaymentResult (check isSuccess() before dispensing)
-     */
     public static PaymentResult processPayment(double itemPrice,
                                                double amountTendered,
                                                PaymentMethod method) {
@@ -93,15 +38,6 @@ public class ChangeCalculator {
         }
     }
 
-    // =========================================================================
-    //  PAYMENT METHOD IMPLEMENTATIONS
-    // =========================================================================
-
-    // ── CASH ──────────────────────────────────────────────────────────
-    /**
-     * Validates that enough cash was inserted, then computes change
-     * using the greedy (largest-denomination-first) algorithm.
-     */
     private static PaymentResult processCash(double price, double inserted) {
         if (inserted < price) {
             double shortfall = price - inserted;
@@ -116,14 +52,6 @@ public class ChangeCalculator {
         return PaymentResult.cashSuccess(price, inserted, changeAmount, breakdown);
     }
 
-    // ── CREDIT CARD ───────────────────────────────────────────────────
-    /**
-     * Simulates a credit-card authorisation.
-     * No physical change is dispensed; the card is charged the exact price.
-     *
-     * TODO (team): replace the simulated approval with a real
-     *              payment-gateway call or a card-terminal serial command.
-     */
     private static PaymentResult processCreditCard(double price) {
         // --- Simulated authorisation (always approved for now) ---
         boolean approved = simulateCardAuthorisation("CREDIT", price);
@@ -138,14 +66,6 @@ public class ChangeCalculator {
                 "Credit card charged $" + String.format("%.2f", price) + ".");
     }
 
-    // ── BANK / DEBIT CARD ─────────────────────────────────────────────
-    /**
-     * Simulates a debit/bank-card authorisation.
-     * No physical change is dispensed; the card is charged the exact price.
-     *
-     * TODO (team): replace the simulated approval with a real
-     *              payment-gateway call or a card-terminal serial command.
-     */
     private static PaymentResult processBankCard(double price) {
         // --- Simulated authorisation (always approved for now) ---
         boolean approved = simulateCardAuthorisation("BANK", price);
@@ -160,14 +80,6 @@ public class ChangeCalculator {
                 "Bank card (debit) charged $" + String.format("%.2f", price) + ".");
     }
 
-    // =========================================================================
-    //  INTERNAL UTILITIES
-    // =========================================================================
-
-    /**
-     * Greedy denomination breakdown.
-     * Converts to cents first to eliminate floating-point drift.
-     */
     private static Map<String, Integer> computeBreakdown(double amount) {
         Map<String, Integer> breakdown = new LinkedHashMap<>();
         long remaining = Math.round(amount * 100);
@@ -184,14 +96,6 @@ public class ChangeCalculator {
         return breakdown;
     }
 
-    /**
-     * Stub for card terminal authorisation.
-     * Replace with actual gateway logic (HTTP call, serial port, etc.).
-     *
-     * @param cardType  "CREDIT" or "BANK"
-     * @param amount    Amount to charge
-     * @return          true = approved, false = declined
-     */
     private static boolean simulateCardAuthorisation(String cardType, double amount) {
         // Placeholder: always approve.
         // TODO: integrate real payment gateway here.
@@ -200,24 +104,6 @@ public class ChangeCalculator {
         return true;
     }
 
-    // =========================================================================
-    //  PAYMENT RESULT  —  inner class returned by processPayment()
-    // =========================================================================
-
-    /**
-     * Immutable result object returned after every payment attempt.
-     *
-     * Fields always available:
-     *   isSuccess()     — whether the payment went through
-     *   getMessage()    — human-readable status string
-     *   getMethod()     — which PaymentMethod was used
-     *   getAmountPaid() — price of the item (0 if failed)
-     *
-     * Cash-only fields (0 / empty map on card payments):
-     *   getAmountInserted()
-     *   getChangeAmount()
-     *   getChangeBreakdown()
-     */
     public static class PaymentResult {
 
         private final boolean             success;
@@ -228,7 +114,6 @@ public class ChangeCalculator {
         private final double              changeAmount;     // cash only
         private final Map<String, Integer> changeBreakdown; // cash only
 
-        // ── Private constructors (use static factories below) ─────────
         private PaymentResult(boolean success, String message, PaymentMethod method,
                               double amountPaid, double amountInserted,
                               double changeAmount, Map<String, Integer> changeBreakdown) {
@@ -241,7 +126,6 @@ public class ChangeCalculator {
             this.changeBreakdown = changeBreakdown;
         }
 
-        // ── Static factories ──────────────────────────────────────────
         static PaymentResult cashSuccess(double price, double inserted,
                                          double change,
                                          Map<String, Integer> breakdown) {
@@ -261,7 +145,6 @@ public class ChangeCalculator {
                     method, 0.0, 0.0, 0.0, new LinkedHashMap<>());
         }
 
-        // ── Getters ───────────────────────────────────────────────────
         public boolean             isSuccess()         { return success; }
         public String              getMessage()        { return message; }
         public PaymentMethod       getMethod()         { return method; }
@@ -272,11 +155,6 @@ public class ChangeCalculator {
             return new LinkedHashMap<>(changeBreakdown);
         }
 
-        // ── Console receipt printer ───────────────────────────────────
-        /**
-         * Prints a formatted receipt to stdout.
-         * Call this after confirming the result is a success.
-         */
         public void printReceipt() {
             System.out.println("\n  ======================================");
             System.out.println("  [OK]  PAYMENT SUCCESSFUL");
@@ -302,8 +180,6 @@ public class ChangeCalculator {
             System.out.println("  ======================================");
         }
 
-        /** Short one-line summary for logging.
-         * @return  */
         @Override
         public String toString() {
             return String.format("PaymentResult[%s | %s | paid=$%.2f | change=$%.2f]",
