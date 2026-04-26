@@ -11,7 +11,7 @@ public class FileManager {
     private final String HISTORY_FILE = "history.txt";
     private final String ADMIN_FILE = "admin.txt";
 
-       // Envanteri dosyadan yükleme fonksiyonu*
+       //Function to download inventory from file
     public Map<String, AbstractProduct> loadInventory() {
         Map<String, AbstractProduct> inventory = new LinkedHashMap<>();
         try (BufferedReader br = new BufferedReader(new FileReader(PRODUCT_FILE))) {
@@ -48,7 +48,7 @@ public class FileManager {
         return inventory;
     }
 
-    // Envanteri dosyaya kaydetme fonksiyonu
+    //Function to save the inventory to the file
     public void saveInventory(Map<String, AbstractProduct> inventory) {
         try (PrintWriter pw = new PrintWriter(new FileWriter(PRODUCT_FILE))) {
             for (AbstractProduct p : inventory.values()) {
@@ -77,7 +77,7 @@ public class FileManager {
         }
     }
 
-    // Kasa bakiyesi fonksiyonu
+    // Vault balance function
     public double getVaultBalance() {
         try (Scanner sc = new Scanner(new File(VAULT_FILE))) {
             if (sc.hasNextDouble()) return sc.nextDouble();
@@ -87,7 +87,7 @@ public class FileManager {
         return 0;
     }
 
-    // Kasa guncelleme 
+    // Update vault
     public void updateVault(double amount) {
         double current = getVaultBalance();
         try (PrintWriter pw = new PrintWriter(new FileWriter(VAULT_FILE))) {
@@ -97,7 +97,7 @@ public class FileManager {
         }
     }
 
-    // Satis gecmisi fonksiyonu
+    //fFunction to see Sale history
     public void logSale(String name, double price) {
         try (PrintWriter pw = new PrintWriter(new FileWriter(HISTORY_FILE, true))) {
             String date = new java.text.SimpleDateFormat("dd-MM-yyyy HH:mm").format(new Date());
@@ -107,7 +107,7 @@ public class FileManager {
         }
     }
     
-    //YÖNETİCİ sifre dosyası kontrol fonksiyonu
+    //Function to check Admin Password File
     public boolean hasAdminFile(){
         return new File(ADMIN_FILE).exists();
     }
@@ -119,7 +119,7 @@ public class FileManager {
         }
     }
         
-    // YÖNETİCİ sifre kontrol fonksiyonu
+    //Function to check Admin Password
     public boolean checkAdminPassword(String pass) {
         try (Scanner sc = new Scanner(new File(ADMIN_FILE))) {
             if (sc.hasNext()) return sc.next().equals(pass);
