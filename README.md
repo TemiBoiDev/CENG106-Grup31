@@ -17,6 +17,6 @@ We built custom safety nets into the code so the console does not crash during t
 * Out of Stock: Buying an empty item triggers our custom OutOfStockException to block the sale.
 
 * ##TODO:
-* Will add GUI
+* Will add GUI and link it to backend
 * The admin menu will be extended to create the extended subclassses
-* 
+* Will add more comment lines
