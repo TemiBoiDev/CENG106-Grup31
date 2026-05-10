@@ -2,7 +2,7 @@ package vendingmachine.products.types;
 
 import vendingmachine.products.ProductFood;
 
-public class TypeFoodPackaged extends ProductFood {
+public abstract class TypeFoodPackaged extends ProductFood {
     private double weightGrams;     
     private String brand;           
     public TypeFoodPackaged(int id, String slotId, String name, double price,

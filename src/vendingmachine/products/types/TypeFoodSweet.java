@@ -1,6 +1,6 @@
 package vendingmachine.products.types;
 
-public class TypeFoodSweet extends  TypeFoodPackaged{
+public abstract class TypeFoodSweet extends  TypeFoodPackaged{
     private String sweetenerType;  
     public TypeFoodSweet(int id, String slotId, String name, double price,
                      int stockQuantity, int calorieCount,

@@ -1,7 +1,6 @@
 package vendingmachine.products.types;
 
-
-public class TypeBeverageTea extends TypeBeverageHot{
+public abstract class TypeBeverageTea extends TypeBeverageHot{
     private String teaOrigin;
     private int brewingTimeSec;
     public TypeBeverageTea(int id, String slotId, String name, double price,
