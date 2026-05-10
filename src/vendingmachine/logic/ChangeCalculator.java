@@ -5,12 +5,14 @@ import java.util.Map;
 
 public class ChangeCalculator {
 
+
     public enum PaymentMethod {
         CASH,
         CREDIT_CARD,
         BANK_CARD
     }
 
+    // ── US denominations (largest first) ─────────────────────────────
     private static final double[] DENOMINATIONS = {
         100.00, 50.00, 20.00, 10.00, 5.00, 1.00,
         0.25, 0.10, 0.05, 0.01
@@ -114,6 +116,7 @@ public class ChangeCalculator {
         private final double              changeAmount;     // cash only
         private final Map<String, Integer> changeBreakdown; // cash only
 
+        // ── Private constructors (use static factories below) ─────────
         private PaymentResult(boolean success, String message, PaymentMethod method,
                               double amountPaid, double amountInserted,
                               double changeAmount, Map<String, Integer> changeBreakdown) {
@@ -126,6 +129,7 @@ public class ChangeCalculator {
             this.changeBreakdown = changeBreakdown;
         }
 
+        // ── Static factories ──────────────────────────────────────────
         static PaymentResult cashSuccess(double price, double inserted,
                                          double change,
                                          Map<String, Integer> breakdown) {
@@ -145,6 +149,7 @@ public class ChangeCalculator {
                     method, 0.0, 0.0, 0.0, new LinkedHashMap<>());
         }
 
+        // ── Getters ───────────────────────────────────────────────────
         public boolean             isSuccess()         { return success; }
         public String              getMessage()        { return message; }
         public PaymentMethod       getMethod()         { return method; }
@@ -155,6 +160,11 @@ public class ChangeCalculator {
             return new LinkedHashMap<>(changeBreakdown);
         }
 
+        // ── Console receipt printer ───────────────────────────────────
+        /**
+         * Prints a formatted receipt to stdout.
+         * Call this after confirming the result is a success.
+         */
         public void printReceipt() {
             System.out.println("\n  ======================================");
             System.out.println("  [OK]  PAYMENT SUCCESSFUL");
@@ -180,6 +190,8 @@ public class ChangeCalculator {
             System.out.println("  ======================================");
         }
 
+        /** Short one-line summary for logging.
+         * @return  */
         @Override
         public String toString() {
             return String.format("PaymentResult[%s | %s | paid=$%.2f | change=$%.2f]",

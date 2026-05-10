@@ -3,6 +3,8 @@ package vendingmachine.logic;
 import vendingmachine.VendingMachine;
 import vendingmachine.data.FileManager;
 import vendingmachine.products.AbstractProduct;
+import vendingmachine.OutOfStockException;
+import vendingmachine.ProductNotFoundException;
 
 public class LogicUser {
     public boolean checkAvailability(String slot){
@@ -13,19 +15,28 @@ public class LogicUser {
         VendingMachine machine = VendingMachine.getInstance();
         return machine.getPrice(slot);
     }
-    public boolean processSale(String slot, double moneyInserted){
-        VendingMachine machine = VendingMachine.getInstance();
-        
-        machine.dispense(slot);
-        machine.addRevenue(moneyInserted);
-        
-        FileManager fm = new FileManager();
-        AbstractProduct item = machine.getProductOrThrow(slot);
-        
-        fm.logSale(item.getName(), machine.getPrice(slot));
-        fm.saveInventory(machine.getInventory());
-        fm.updateVault(machine.getPrice(slot));
-        
-        return true;
+    //Processing change happens in GUI
+    public boolean processSale(String slot){
+        try {
+            VendingMachine machine = VendingMachine.getInstance();
+            
+            //gather data
+            AbstractProduct item = machine.getProductOrThrow(slot);
+            double price = machine.getPrice(slot);
+            String itemName = item.getName();
+            //Perform Job
+            machine.dispense(slot);
+            machine.addRevenue(price);
+            //File Management
+            FileManager fm = new FileManager();
+            fm.saveTransaction(machine.getInventory(), itemName, price);
+            return true;
+            
+            } catch (OutOfStockException | ProductNotFoundException e) {    
+                // Log the error to the console for debugging
+                System.err.println("Sale failed to process: " + e.getMessage());
+                
+                return false;
+            }
     }
 }

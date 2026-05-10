@@ -11,14 +11,21 @@ public class FileManager {
     private final String HISTORY_FILE = "history.txt";
     private final String ADMIN_FILE = "admin.txt";
 
-       //Function to download inventory from file
+    // Satış işlemi sonrası tüm dosyaları tek seferde güncelleme
+    public void saveTransaction(Map<String, AbstractProduct> inventory, String itemName, double price) {
+        logSale(itemName, price);
+        saveInventory(inventory);
+        updateVault(price);
+    }
+    
+       // Envanteri dosyadan yükleme fonksiyonu*
     public Map<String, AbstractProduct> loadInventory() {
         Map<String, AbstractProduct> inventory = new LinkedHashMap<>();
         try (BufferedReader br = new BufferedReader(new FileReader(PRODUCT_FILE))) {
             String line;
             while ((line = br.readLine()) != null) {
                 if (line.trim().isEmpty()) continue;
-                String[] p = line.split(",");
+                String[] p = line.split("\\|");
                 String type = p[0];
                 int id = Integer.parseInt(p[1]);
                 String slot = p[2];
@@ -32,7 +39,10 @@ public class FileManager {
                         inventory.put(slot, new ProductFood(id, slot, name, price, stock, Integer.parseInt(extra)));
                         break;
                     case "BEVERAGES":
-                        inventory.put(slot, new ProductBeverage(id, slot, name, price, stock, Boolean.parseBoolean(extra)));
+                        String[] bevParts = extra.split(",");
+                        boolean isCooled = Boolean.parseBoolean(bevParts[0]);
+                        int volumeMl = (bevParts.length > 1) ? Integer.parseInt(bevParts[1]) : 500;
+                        inventory.put(slot, new ProductBeverage(id, slot, name, price, stock, isCooled, volumeMl));
                         break;
                     case "TECHNOLOGICAL":
                         inventory.put(slot, new ProductTechnology(id, slot, name, price, stock, extra));
@@ -43,16 +53,16 @@ public class FileManager {
                 }
             }
         } catch (IOException | NumberFormatException e) {
-            System.out.println("VERİ OKUNAMADI");
+            System.out.println("Could not read inventory file.");
         }
         return inventory;
     }
 
-    //Function to save the inventory to the file
+    // Envanteri dosyaya kaydetme fonksiyonu
     public void saveInventory(Map<String, AbstractProduct> inventory) {
         try (PrintWriter pw = new PrintWriter(new FileWriter(PRODUCT_FILE))) {
             for (AbstractProduct p : inventory.values()) {
-                String type = "TECH";
+                String type = "TECHNOLOGICAL";
                 String extra = "";
 
                 if (p instanceof ProductFood) {
@@ -60,7 +70,8 @@ public class FileManager {
                     extra = String.valueOf(((ProductFood) p).getCalorieCount());
                 } else if (p instanceof ProductBeverage) {
                     type = "BEVERAGES";
-                    extra = String.valueOf(((ProductBeverage) p).isCooled());
+                    ProductBeverage bev = (ProductBeverage) p;
+                    extra = bev.isCooled() + "," + bev.getVolumeMl();
                 } else if (p instanceof ProductPet) {
                     type = "PET";
                     extra = ((ProductPet) p).getPetType();
@@ -69,15 +80,15 @@ public class FileManager {
                     extra = ((ProductTechnology) p).getDeviceType();
                 }
 
-                pw.println(type + "," + p.getId() + "," + p.getSlotId() + "," + 
-                           p.getName() + "," + p.getPrice() + "," + p.getStockQuantity() + "," + extra);
+                pw.println(type + "|" + p.getId() + "|" + p.getSlotId() + "|" + 
+                           p.getName() + "|" + p.getPrice() + "|" + p.getStockQuantity() + "|" + extra);
             }
         } catch (IOException e) {
-            System.out.println("ÜRÜN KAYDEDİLEMEDİ!!!");
+            System.out.println("Could not save inventory!");
         }
     }
 
-    // Vault balance function
+    // Kasa bakiyesi fonksiyonu
     public double getVaultBalance() {
         try (Scanner sc = new Scanner(new File(VAULT_FILE))) {
             if (sc.hasNextDouble()) return sc.nextDouble();
@@ -87,27 +98,27 @@ public class FileManager {
         return 0;
     }
 
-    // Update vault
+    // Kasa guncelleme 
     public void updateVault(double amount) {
         double current = getVaultBalance();
         try (PrintWriter pw = new PrintWriter(new FileWriter(VAULT_FILE))) {
             pw.print(current + amount);
         } catch (IOException e) {
-            System.err.println("Kasa hatasi!");
+            System.err.println("Vault update error!");
         }
     }
 
-    //fFunction to see Sale history
+    // Satis gecmisi fonksiyonu
     public void logSale(String name, double price) {
         try (PrintWriter pw = new PrintWriter(new FileWriter(HISTORY_FILE, true))) {
             String date = new java.text.SimpleDateFormat("dd-MM-yyyy HH:mm").format(new Date());
-            pw.println(date + " - Satis: " + name + " - Tutar: $" + price);
+            pw.println(date + "Sale: " + name + " - Amount: $" + price);
         } catch (IOException e) {
-            System.err.println("KAYIT YÜKLEMEDE HATA OLUSTU");
+            System.err.println("Could not write sale history.");
         }
     }
     
-    //Function to check Admin Password File
+    //YÖNETİCİ sifre dosyası kontrol fonksiyonu
     public boolean hasAdminFile(){
         return new File(ADMIN_FILE).exists();
     }
@@ -119,12 +130,12 @@ public class FileManager {
         }
     }
         
-    //Function to check Admin Password
+    // YÖNETİCİ sifre kontrol fonksiyonu
     public boolean checkAdminPassword(String pass) {
         try (Scanner sc = new Scanner(new File(ADMIN_FILE))) {
             if (sc.hasNext()) return sc.next().equals(pass);
         } catch (FileNotFoundException e) {
-            System.err.println("Sifre dosyasi yok!");
+            System.err.println("Admin password file not found!");
         }
         return false;
     }
